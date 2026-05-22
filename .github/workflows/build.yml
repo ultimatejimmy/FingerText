@@ -4,11 +4,13 @@ on:
   push:
     branches: ["**"]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
     strategy:
+      fail-fast: false
       matrix:
         platform: [Win32, x64]
     name: Build ${{ matrix.platform }}
@@ -19,13 +21,30 @@ jobs:
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build ${{ matrix.platform }} Release
+      - name: Show available Windows SDKs
+        shell: pwsh
         run: |
-          msbuild FingerText.vcxproj `
-            /m `
-            /p:Configuration="Unicode Release" `
-            /p:Platform="${{ matrix.platform }}" `
-            /p:PlatformToolset=v143
+          Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\Include" -Directory -ErrorAction SilentlyContinue | Select-Object Name
+
+      - name: Build ${{ matrix.platform }} Release
+        shell: cmd
+        run: |
+          msbuild FingerText.vcxproj ^
+            /m ^
+            /p:Configuration="Unicode Release" ^
+            /p:Platform="${{ matrix.platform }}" ^
+            /p:PlatformToolset=v143 ^
+            /p:WindowsTargetPlatformVersion=10.0 ^
+            /fileLogger ^
+            /fileLoggerParameters:LogFile=msbuild-${{ matrix.platform }}.log;Verbosity=normal
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: msbuild-log-${{ matrix.platform }}
+          path: msbuild-${{ matrix.platform }}.log
+          if-no-files-found: warn
 
       - name: Locate DLL
         id: locate
@@ -38,7 +57,7 @@ jobs:
           }
           echo "dll=$dll" >> $env:GITHUB_OUTPUT
 
-      - name: Upload artifact
+      - name: Upload DLL artifact
         uses: actions/upload-artifact@v4
         with:
           name: FingerText-${{ matrix.platform }}
