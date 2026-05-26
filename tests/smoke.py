@@ -111,7 +111,7 @@ try:
     plugins_menu = npp_win.child_window(title="Plugins", control_type="MenuItem")
     plugins_menu.click_input()
     time.sleep(0.5)
-    ft2_menu = npp_win.child_window(title_re=".*FingerText2.*", control_type="MenuItem")
+    ft2_menu = npp_win.child_window(title="FingerText2", control_type="MenuItem")
     ft2_menu.click_input()
     time.sleep(0.5)
     # Dismiss by pressing Escape
@@ -127,7 +127,7 @@ try:
     plugins_menu = npp_win.child_window(title="Plugins", control_type="MenuItem")
     plugins_menu.click_input()
     time.sleep(0.5)
-    ft2_menu = npp_win.child_window(title_re=".*FingerText2.*", control_type="MenuItem")
+    ft2_menu = npp_win.child_window(title="FingerText2", control_type="MenuItem")
     ft2_menu.click_input()
     time.sleep(0.5)
     about_item = npp_win.child_window(title_re=".*About.*", control_type="MenuItem")
