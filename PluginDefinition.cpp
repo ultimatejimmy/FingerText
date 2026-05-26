@@ -4131,7 +4131,22 @@ bool exportSnippets(bool all, wchar_t* path)
 
 void importSnippetsOnly()
 {
-    importSnippets();
+    ::OutputDebugStringA("[FingerText] importSnippetsOnly: enter\n");
+    try
+    {
+        importSnippets();
+    }
+    catch (const std::exception& e)
+    {
+        ::OutputDebugStringA("[FingerText] importSnippetsOnly std::exception: ");
+        ::OutputDebugStringA(e.what());
+        ::OutputDebugStringA("\n");
+    }
+    catch (...)
+    {
+        ::OutputDebugStringA("[FingerText] importSnippetsOnly unknown exception\n");
+    }
+    ::OutputDebugStringA("[FingerText] importSnippetsOnly: exit\n");
 }
 
 
@@ -4139,11 +4154,21 @@ void importSnippetsOnly()
 //TODO: Or it should be rewrite, import snippet should open the snippetediting.ftb, turn or annotation, and cut and paste the snippet on to that file and use the saveSnippet function
 void importSnippets(wchar_t* path)
 {
-    
-    
+    ::OutputDebugStringA("[FingerText] importSnippets: enter, path=");
+    if (path != NULL)
+    {
+        char p8[MAX_PATH * 2] = {0};
+        ::WideCharToMultiByte(CP_UTF8, 0, path, -1, p8, sizeof(p8) - 1, NULL, NULL);
+        ::OutputDebugStringA(p8);
+    } else {
+        ::OutputDebugStringA("(null)");
+    }
+    ::OutputDebugStringA("\n");
+
     //TODO: importing snippet will change the current directory, which is not desirable effect
     if (::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE, 0, (LPARAM)g_ftbPath))
     {
+        ::OutputDebugStringA("[FingerText] importSnippets: closing existing SnippetEditor.ftb tab\n");
         ::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, IDM_FILE_CLOSE);
         //TODO: prompt for closing tab instead of just warning
         //showMessageBox(TEXT("Please close all the snippet editing tabs (SnippetEditor.ftb) before importing any snippet pack."));
@@ -4153,28 +4178,18 @@ void importSnippets(wchar_t* path)
 
     if (::SendMessage(nppData._nppHandle, NPPM_SWITCHTOFILE, 0, (LPARAM)g_fttempPath))
     {
+        ::OutputDebugStringA("[FingerText] importSnippets: closing existing fttemp tab\n");
         ::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, IDM_FILE_SAVE);
         ::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, IDM_FILE_CLOSE);
-    }   
+    }
 
-
-    //TODO: verify why an error may occur when this backupAllSnippet block is put inside the ((getSave) || (withPath)) block
-    //if (backupAllSnippets())
-    //{
-    //    showMessageBox(TEXT("Fingertext backed up your current snippet database in the SnippetBackup.ftd in the config folder.\r\n\r\nIn case any thing strange happened during the import process, you can recover you snippets by importing the backup ftd file."),MB_OK);
-    //} else
-    //{
-    //    int continueImport = showMessageBox(TEXT("An error occurred and Fingertext cannot backup your current snippet database. \r\n\r\nYou can continue to import the snippets but you may not be able to undo this action.\r\n\r\n Are you sure that you want to contine with the import action?"),MB_YESNO);
-    //    if (!(continueImport == IDYES)) return;
-    //}
-    //
-    //TODO: to decide on whether to silently backup or to explicitly tell the user the snippets are backup.
+    ::OutputDebugStringA("[FingerText] importSnippets: before backupAllSnippets\n");
     if (toDouble(g_snippetCount) != 0) backupAllSnippets();
-
+    ::OutputDebugStringA("[FingerText] importSnippets: after backupAllSnippets\n");
 
     g_freezeDock = true;
     pc.configInt[LIVE_HINT_UPDATE]--;
-    
+
     //TODO: improve efficiency by ignoring these in the case of withPath
     OPENFILENAME ofn;
     wchar_t fileName[MAX_PATH] = TEXT("");
@@ -4187,14 +4202,19 @@ void importSnippets(wchar_t* path)
     ofn.nMaxFile = MAX_PATH;
     ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
     ofn.lpstrDefExt = TEXT("");
-    
+
     bool getSave = false;
     bool withPath = true;
-    if (::wcscmp(path,TEXT(""))==0) withPath = false;
+    if (path == NULL || ::wcscmp(path,TEXT(""))==0) withPath = false;
+    ::OutputDebugStringA(withPath ? "[FingerText] importSnippets: withPath=true\n"
+                                  : "[FingerText] importSnippets: withPath=false, showing file dialog\n");
     if (!withPath) getSave = ::GetSaveFileName(&ofn);
+    ::OutputDebugStringA(getSave ? "[FingerText] importSnippets: file dialog returned true\n"
+                                 : "[FingerText] importSnippets: file dialog returned false or skipped\n");
 
     if ((getSave) || (withPath))
-    {   
+    {
+        ::OutputDebugStringA("[FingerText] importSnippets: entering import block\n");
         int conflictKeepCopy = IDNO;
         if (toDouble(g_snippetCount) != 0)
         {
@@ -4212,6 +4232,7 @@ void importSnippets(wchar_t* path)
         std::ifstream file;
         //file.open((LPCWSTR)fileName, std::ios::binary | std::ios::in);     //TODO: verified why this doesn't work. Specifying the binary thing will cause redundant copy keeping when importing
         
+        ::OutputDebugStringA("[FingerText] importSnippets: opening file\n");
         if (withPath)
         {
             file.open((LPCWSTR)path);
@@ -4219,12 +4240,17 @@ void importSnippets(wchar_t* path)
         {
             file.open((LPCWSTR)fileName);
         }
+        ::OutputDebugStringA(file.is_open() ? "[FingerText] importSnippets: file.is_open() == true\n"
+                                            : "[FingerText] importSnippets: file.is_open() == false\n");
 
         if (file.is_open())
         {
             file.seekg(0, std::ios::end);
             std::streampos rawLength = file.tellg();
             file.seekg(0, std::ios::beg);
+            char lenMsg[128];
+            ::wsprintfA(lenMsg, "[FingerText] importSnippets: rawLength=%lld\n", (long long)rawLength);
+            ::OutputDebugStringA(lenMsg);
             if (rawLength < 0)
             {
                 file.close();
@@ -4235,16 +4261,23 @@ void importSnippets(wchar_t* path)
             }
             size_t fileLength = static_cast<size_t>(rawLength);
 
+            ::OutputDebugStringA("[FingerText] importSnippets: allocating fileText\n");
             char* fileText = new char[fileLength+1];
             ZeroMemory(fileText,fileLength);
 
+            ::OutputDebugStringA("[FingerText] importSnippets: reading file content\n");
             file.read(fileText,fileLength);
             fileText[fileLength] = '\0';
             file.close();
+            ::OutputDebugStringA("[FingerText] importSnippets: file read complete\n");
         
+            ::OutputDebugStringA("[FingerText] importSnippets: creating new tab via IDM_FILE_NEW\n");
             ::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, IDM_FILE_NEW);
+            ::OutputDebugStringA("[FingerText] importSnippets: NPPM_GETCURRENTBUFFERID\n");
             LRESULT importEditorBufferID = ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTBUFFERID, 0, 0);
+            ::OutputDebugStringA("[FingerText] importSnippets: NPPM_SETBUFFERENCODING\n");
             ::SendMessage(nppData._nppHandle, NPPM_SETBUFFERENCODING, (WPARAM)importEditorBufferID, 4);
+            ::OutputDebugStringA("[FingerText] importSnippets: tab set up; about to SCI_SETTEXT\n");
 
             //HWND curScintilla = getCurrentScintilla();
             ::SendScintilla(SCI_SETCURSOR, SC_CURSORWAIT, 0);
@@ -4270,11 +4303,16 @@ void importSnippets(wchar_t* path)
             char* snippetTextOld;
             //char* snippetTextOldCleaned;
             
+            ::OutputDebugStringA("[FingerText] importSnippets: entering loop\n");
+            int iterCount = 0;
             do
             {
+                char iterMsg[64];
+                ::wsprintfA(iterMsg, "[FingerText] importSnippets: loop iter %d\n", iterCount++);
+                ::OutputDebugStringA(iterMsg);
                 //import snippet do not have the problem of " " in save snippet because of the space in  "!$[FingerTextData FingerTextData]@#"
                 ::SendScintilla(SCI_GOTOPOS, 0, 0);
-                                
+
                 getLineChecked(&tagText,1,TEXT("Error: Invalid TriggerText. The ftd file may be corrupted."));
                 getLineChecked(&tagTypeText,2,TEXT("Error: Invalid Scope. The ftd file may be corrupted."));
                 
