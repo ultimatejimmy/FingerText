@@ -40,7 +40,7 @@ jobs:
       - name: Build ${{ matrix.platform }} Release
         shell: cmd
         run: |
-          msbuild FingerText.vcxproj ^
+          msbuild FingerText2.vcxproj ^
             /m ^
             /p:Configuration="Unicode Release" ^
             /p:Platform="${{ matrix.platform }}" ^
@@ -62,15 +62,15 @@ jobs:
         shell: pwsh
         run: |
           if ("${{ matrix.platform }}" -eq "x64") {
-            $dll = "x64\Unicode Release\FingerText.dll"
+            $dll = "x64\Unicode Release\FingerText2.dll"
           } else {
-            $dll = "Unicode Release\FingerText.dll"
+            $dll = "Unicode Release\FingerText2.dll"
           }
           echo "dll=$dll" >> $env:GITHUB_OUTPUT
 
       - name: Upload DLL artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FingerText-${{ matrix.platform }}
+          name: FingerText2-${{ matrix.platform }}
           path: ${{ steps.locate.outputs.dll }}
           if-no-files-found: error

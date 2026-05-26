@@ -262,21 +262,21 @@ All hotspots are now triggered from inside to outside, left to right. Therefore 
 Upgrading from 0.4.15 or 0.4.16\r\n\
 If you want to use your snippets after you upgrade to ");
         strcat(welcomeText, VERSION_TEXT);
-        strcat(welcomeText, ", you can go to the config folder and move the FingerText.db3 file to the config\\FingerText folder after update.\r\n\
+        strcat(welcomeText, ", you can go to the config folder and move the FingerText2.db3 file to the config\\FingerText2 folder after update.\r\n\
 chain snippet is indicated by $[![(cha)]!] instead of $[![(chain)]!]\r\n\
 \r\n\
 Upgrading from 0.4.4 or 0.4.11\r\n\
 If you want to use your snippets after you upgrade to ");
         strcat(welcomeText, VERSION_TEXT);
-        strcat(welcomeText, ", you can go to the config folder and move the FingerText.db3 file to the config\\FingerText folder after update.\r\n\
+        strcat(welcomeText, ", you can go to the config folder and move the FingerText2.db3 file to the config\\FingerText2 folder after update.\r\n\
 \r\n\
 Upgrading from 0.4.1\r\n\
 If you want to use your snippets after you upgrade to ");
         strcat(welcomeText, VERSION_TEXT);
-        strcat(welcomeText, ", you can go to the %Notepad++ folder%\\plugins\\FingerText and get the old database file Snippets.db3. Rename is to FingerText.db3 and move it to the config\\FingerText folder after update.\r\n\
+        strcat(welcomeText, ", you can go to the %Notepad++ folder%\\plugins\\FingerText2 and get the old database file Snippets.db3. Rename it to FingerText2.db3 and move it to the config\\FingerText2 folder after update.\r\n\
 \r\n\
 Upgrading from 0.3.5 or below\r\n\
-FingerText 0.3.5 or below use a 'one snippet per file' system to store snippets, which is not compatibile with current version. If you really have a lot of snippets created using these early version, please send your snippets to erinata@gmail.com. I will try my best to import them into the database in the current version.\r\n\
+FingerText2 uses a database system to store snippets. Snippets from very early versions are not compatible. Visit the wiki for more information.\r\n\
 ");
     
 
@@ -367,21 +367,21 @@ void PluginConfig::settings()
 void PluginConfig::help()
 {
     TCHAR* helpText = TEXT("\
-FingerText Quick Guide:\r\n\r\n\
+FingerText2 Quick Guide:\r\n\r\n\
 Insert Snippet --- Type in TriggerText and Hit the tab key\r\n\
 Navigate to next Hotspot --- Hit the tab key\r\n\
-Show SnippetDock --- Menu>Plugins>FingerText>Toggle On/Off SnippetDock\r\n\
-AutoComplete TriggerText --- Menu>Plugins>FingerText>TriggerText Completion\r\n\
+Show SnippetDock --- Menu>Plugins>FingerText2>Toggle On/Off SnippetDock\r\n\
+AutoComplete TriggerText --- Menu>Plugins>FingerText2>TriggerText Completion\r\n\
 Goto Snippet Editor --- Double click a snippet in the SnippetDock\r\n\
 Create New Snippet --- Click Create button on the SnippetDock\r\n\
 Create snippet from selection -- Select some text and click create button\r\n\
 Save Snippet --- In the Snippet Editor View, Click Save Button or Ctrl+S\r\n\
 Delete Snippet --- Select a snippet on SnippetDock and Click Delete Button\r\n\
-Export Snippets --- Menu>Plugins>FingerText>Export Snippets\r\n\
-Delete All Snippets --- Menu>Plugins>FingerText>Export and Delete All Snippets\r\n\
-Import Snippets --- Menu>Plugins>FingerText>Import Snippets\r\n\
-About FingerText --- Menu>Plugins>FingerText>About\r\n\r\n\
-For step by step usage guide, please visit http://github.com/erinata/FingerText \
+Export Snippets --- Menu>Plugins>FingerText2>Export Snippets\r\n\
+Delete All Snippets --- Menu>Plugins>FingerText2>Export and Delete All Snippets\r\n\
+Import Snippets --- Menu>Plugins>FingerText2>Import Snippets\r\n\
+About FingerText2 --- Menu>Plugins>FingerText2>About\r\n\r\n\
+For full documentation, please visit https://github.com/ultimatejimmy/FingerText2/wiki \
 ");
     showMessageBox(helpText);
      //ShellExecute(NULL, TEXT("open"), TEXT("https://github.com/erinata/FingerText"), NULL, NULL, SW_SHOWNORMAL);

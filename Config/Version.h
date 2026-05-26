@@ -43,19 +43,19 @@
 #define DEFAULTSNIPPETPATH "DefaultSnippetPackage\\Default_Snippet_Package-0.2.0.ftd"
 
 
-#define AUTHOR_NAME "erinata"
-#define PLUGIN_NAME "FingerText"
-#define COPYRIGHT_TEXT "Copyright (C) 2011-2012"
+#define AUTHOR_NAME "Jimmy Pautz"
+#define PLUGIN_NAME "FingerText2"
+#define COPYRIGHT_TEXT "Copyright (C) 2026"
 #define DESCRIPTION_TEXT "A snippet plugin for notepad++"
 
-#define DATE_TEXT "April 2012"
-#define AUTHOR_TEXT "Author: Tom Lam\r\n"
-#define EMAIL_TEXT "Email: erinata@gmail.com\r\n"
+#define DATE_TEXT "May 2026"
+#define AUTHOR_TEXT "Author: Jimmy Pautz\r\n"
+#define EMAIL_TEXT ""
 #define ABOUT_TEXT "\
-Update to the lastest version:\r\n\
-           http://sourceforge.net/projects/fingertext/ \r\n\
-Usage Guide and Source code:\r\n\
-           http://github.com/erinata/FingerText \r\n\r\n\
+Homepage and releases:\r\n\
+           https://github.com/ultimatejimmy/FingerText2 \r\n\
+Documentation:\r\n\
+           https://github.com/ultimatejimmy/FingerText2/wiki \r\n\r\n\
 "
 #ifdef TESTING
 #define MENU_LENGTH 22

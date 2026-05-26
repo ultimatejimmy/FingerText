@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2879EF3E-1AA6-4504-9C24-1F685F215BB5}</ProjectGuid>
-    <RootNamespace>FingerText</RootNamespace>
+    <RootNamespace>FingerText2</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>

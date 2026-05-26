@@ -24,15 +24,15 @@ echo Found MSBuild: %MSBUILD%
 echo.
 
 echo Building Win32 Release...
-"%MSBUILD%" FingerText.vcxproj /m /p:Configuration="Unicode Release" /p:Platform=Win32 /p:PlatformToolset=v143 /verbosity:minimal
+"%MSBUILD%" FingerText2.vcxproj /m /p:Configuration="Unicode Release" /p:Platform=Win32 /p:PlatformToolset=v143 /verbosity:minimal
 if %errorlevel% neq 0 ( echo FAILED. & pause & exit /b 1 )
-echo Win32 build succeeded: Unicode Release\FingerText.dll
+echo Win32 build succeeded: Unicode Release\FingerText2.dll
 
 echo.
 echo Building x64 Release...
-"%MSBUILD%" FingerText.vcxproj /m /p:Configuration="Unicode Release" /p:Platform=x64 /p:PlatformToolset=v143 /verbosity:minimal
+"%MSBUILD%" FingerText2.vcxproj /m /p:Configuration="Unicode Release" /p:Platform=x64 /p:PlatformToolset=v143 /verbosity:minimal
 if %errorlevel% neq 0 ( echo FAILED. & pause & exit /b 1 )
-echo x64 build succeeded: x64\Unicode Release\FingerText.dll
+echo x64 build succeeded: x64\Unicode Release\FingerText2.dll
 
 echo.
 echo Both builds complete.

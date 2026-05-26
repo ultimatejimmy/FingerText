@@ -199,7 +199,31 @@ void pathInit()
     ::SendMessage(nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH, reinterpret_cast<LPARAM>(g_basePath));
     ::_tcscat_s(g_basePath,TEXT("\\"));
     ::_tcscat_s(g_basePath,TEXT(PLUGIN_NAME));
-    if (!PathFileExists(g_basePath)) ::CreateDirectory(g_basePath, NULL);
+    if (!PathFileExists(g_basePath))
+    {
+        // One-time migration: if old FingerText config exists and new one does not, copy the data files over.
+        wchar_t oldBase[MAX_PATH];
+        ::SendMessage(nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH, reinterpret_cast<LPARAM>(oldBase));
+        ::_tcscat_s(oldBase, TEXT("\\FingerText"));
+        if (PathFileExists(oldBase))
+        {
+            ::CreateDirectory(g_basePath, NULL);
+            // Files to migrate: db3, ini, ftb, downloaded ftd
+            const wchar_t* oldNames[] = { L"FingerText.db3", L"FingerText.ini", L"SnippetEditor.ftb", L"SnippetsDownloaded.ftd" };
+            const wchar_t* newNames[] = { L"FingerText2.db3", L"FingerText2.ini", L"SnippetEditor.ftb", L"SnippetsDownloaded.ftd" };
+            for (int i = 0; i < 4; ++i)
+            {
+                wchar_t src[MAX_PATH], dst[MAX_PATH];
+                ::_tcscpy_s(src, oldBase);  ::_tcscat_s(src, TEXT("\\"));  ::_tcscat_s(src, oldNames[i]);
+                ::_tcscpy_s(dst, g_basePath); ::_tcscat_s(dst, TEXT("\\"));  ::_tcscat_s(dst, newNames[i]);
+                if (PathFileExists(src)) ::CopyFile(src, dst, TRUE);
+            }
+        }
+        else
+        {
+            ::CreateDirectory(g_basePath, NULL);
+        }
+    }
     
     // Initialize the files needed (ini and database paths are initalized in configInit and databaseInit)
     ::_tcscpy_s(g_fttempPath,g_basePath);
@@ -306,7 +330,7 @@ void commandMenuInit()
     setCommand();
     g_snippetDockIndex = setCommand(TEXT("Toggle On/off SnippetDock"), showSnippetDock);
     g_showInsertionDlgIndex = setCommand(TEXT("Show Snippet Insertion Dialog"), showInsertionDlg,shKey2);
-    g_toggleDisableIndex = setCommand(TEXT("Toggle On/Off FingerText"), toggleDisable);
+    g_toggleDisableIndex = setCommand(TEXT("Toggle On/Off FingerText2"), toggleDisable);
     setCommand();
     g_selectionToSnippetIndex = setCommand(TEXT("Create Snippet from Selection"), doSelectionToSnippet);
     g_downloadDefaultPackageIndex = setCommand(TEXT("Install Default Snippet Package"), installDefaultPackage);
@@ -363,7 +387,7 @@ void nppReady()
     } else 
     {
         g_enable = false; 
-        showMessageBox(TEXT("FingerText cannot be enabled because there is no database connection. Please restart Notepad++ and make sure that the config folder is writable."));
+        showMessageBox(TEXT("FingerText2 cannot be enabled because there is no database connection. Please restart Notepad++ and make sure that the config folder is writable."));
     }
 
     turnOffOptionMode();
@@ -452,13 +476,13 @@ void toggleDisable()
         closeEditor();
         snippetDock.display(false);
         // TODO: refactor all the message boxes to a separate function
-        showMessageBox(TEXT("FingerText is disabled"));
-        
-        //::MessageBox(nppData._nppHandle, TEXT("FingerText is disabled"), TEXT(PLUGIN_NAME), MB_OK);
+        showMessageBox(TEXT("FingerText2 is disabled"));
+
+        //::MessageBox(nppData._nppHandle, TEXT("FingerText2 is disabled"), TEXT(PLUGIN_NAME), MB_OK);
         g_enable = false;
     } else if (!g_dbOpen)
     {
-        showMessageBox(TEXT("FingerText cannot be enabled because there is no database connection. Please restart Notepad++ and make sure that the config folder is writable."));
+        showMessageBox(TEXT("FingerText2 cannot be enabled because there is no database connection. Please restart Notepad++ and make sure that the config folder is writable."));
     } else
     {
 
@@ -473,8 +497,8 @@ void toggleDisable()
         ::EnableMenuItem(hMenu, funcItem[g_TriggerTextCompletionIndex]._cmdID, MF_BYCOMMAND);
         ::EnableMenuItem(hMenu, funcItem[g_InsertHotspotIndex]._cmdID, MF_BYCOMMAND);
 
-        showMessageBox(TEXT("FingerText is enabled"));
-        //::MessageBox(nppData._nppHandle, TEXT("FingerText is enabled"), TEXT(PLUGIN_NAME), MB_OK);
+        showMessageBox(TEXT("FingerText2 is enabled"));
+        //::MessageBox(nppData._nppHandle, TEXT("FingerText2 is enabled"), TEXT(PLUGIN_NAME), MB_OK);
         g_enable = true;
     }
 
@@ -559,7 +583,7 @@ void selectionToSnippet(bool forceNew)
     ::SendScintilla(SCI_CONVERTEOLS,SC_EOL_LF, 0);
     
     ::SendScintilla(SCI_CLEARALL,0,0);
-    ::SendScintilla(SCI_INSERTTEXT,::SendScintilla(SCI_GETLENGTH,0,0), (LPARAM)"------ FingerText Snippet Editor View ------\r\n");
+    ::SendScintilla(SCI_INSERTTEXT,::SendScintilla(SCI_GETLENGTH,0,0), (LPARAM)"------ FingerText2 Snippet Editor View ------\r\n");
     ::SendScintilla(SCI_INSERTTEXT,::SendScintilla(SCI_GETLENGTH,0,0), (LPARAM)"triggertext\r\nGLOBAL\r\n");
     ::SendScintilla(SCI_INSERTTEXT,::SendScintilla(SCI_GETLENGTH,0,0), (LPARAM)selection);
     ::SendScintilla(SCI_INSERTTEXT,::SendScintilla(SCI_GETLENGTH,0,0), (LPARAM)"[>END<]");
@@ -688,7 +712,7 @@ void editSnippet()
 
             ::SendScintilla(SCI_CLEARALL,0,0);
             //::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, IDM_FILE_NEW);
-            ::SendScintilla(SCI_INSERTTEXT, ::SendScintilla(SCI_GETLENGTH,0,0), (LPARAM)"------ FingerText Snippet Editor View ------\r\n");
+            ::SendScintilla(SCI_INSERTTEXT, ::SendScintilla(SCI_GETLENGTH,0,0), (LPARAM)"------ FingerText2 Snippet Editor View ------\r\n");
             ::SendScintilla(SCI_INSERTTEXT, ::SendScintilla(SCI_GETLENGTH,0,0), (LPARAM)tempTriggerText);
             ::SendScintilla(SCI_INSERTTEXT, ::SendScintilla(SCI_GETLENGTH,0,0), (LPARAM)"\r\n");
             ::SendScintilla(SCI_INSERTTEXT, ::SendScintilla(SCI_GETLENGTH,0,0), (LPARAM)allScope.c_str());
@@ -3876,7 +3900,7 @@ void installDefaultPackage()
 
     if (toDouble(g_snippetCount) != 0)
     {
-        messageReturn = showMessageBox(TEXT("It seems that you already have some snippets in your FingerText database.\r\n\r\nAre you sure that you want to install the Default Snippet Package?"),MB_YESNO);
+        messageReturn = showMessageBox(TEXT("It seems that you already have some snippets in your FingerText2 database.\r\n\r\nAre you sure that you want to install the Default Snippet Package?"),MB_YESNO);
         if (messageReturn == IDNO) return;
     }
     
@@ -3987,7 +4011,7 @@ void exportAndClearSnippets()
             showMessageBox(TEXT("All snippets are deleted. \r\n\r\nIf you want to UNDO this action now, you can recover your snippets by importing the SnippetsBackup.ftd file in the Fingertext config folder."));
         } else
         {
-            showMessageBox(TEXT("An error occured. The snippet database cannot be cleared. If you really want to clear the snippet database you can close Notepad++ and remove the FingerText.db3 in the config folder."));
+            showMessageBox(TEXT("An error occured. The snippet database cannot be cleared. If you really want to clear the snippet database you can close Notepad++ and remove the FingerText2.db3 in the config folder."));
         }
         
     } else 
@@ -4033,7 +4057,7 @@ bool exportSnippets(bool all, wchar_t* path)
     
     ofn.lStructSize = sizeof(OPENFILENAME);
     ofn.hwndOwner = NULL;
-    ofn.lpstrFilter = TEXT("FingerText Datafiles (*.ftd)\0*.ftd\0");
+    ofn.lpstrFilter = TEXT("FingerText2 Datafiles (*.ftd)\0*.ftd\0");
     ofn.lpstrFile = (LPWSTR)fileName;
     ofn.nMaxFile = MAX_PATH;
     ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY;
@@ -4137,11 +4161,11 @@ void importSnippetsOnly()
     }
     catch (const std::exception& e)
     {
-        ::MessageBoxA(NULL, e.what(), "FingerText: exception in import", MB_OK | MB_ICONERROR);
+        ::MessageBoxA(NULL, e.what(), "FingerText2: exception in import", MB_OK | MB_ICONERROR);
     }
     catch (...)
     {
-        ::MessageBoxA(NULL, "Unknown exception in importSnippets", "FingerText", MB_OK | MB_ICONERROR);
+        ::MessageBoxA(NULL, "Unknown exception in importSnippets", "FingerText2", MB_OK | MB_ICONERROR);
     }
 }
 
@@ -4178,7 +4202,7 @@ void importSnippets(wchar_t* path)
 
     ofn.lStructSize = sizeof(OPENFILENAME);
     ofn.hwndOwner = NULL;
-    ofn.lpstrFilter = TEXT("FingerText Datafiles (*.ftd)\0*.ftd\0");
+    ofn.lpstrFilter = TEXT("FingerText2 Datafiles (*.ftd)\0*.ftd\0");
     ofn.lpstrFile = (LPWSTR)fileName;
     ofn.nMaxFile = MAX_PATH;
     ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;

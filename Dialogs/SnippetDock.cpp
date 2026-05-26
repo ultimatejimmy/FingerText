@@ -594,11 +594,11 @@ INT_PTR CALLBACK DockingDlg::run_dlgProc(UINT message, WPARAM wParam, LPARAM lPa
                     }
                     catch (const std::exception& e)
                     {
-                        ::MessageBoxA(NULL, e.what(), "FingerText: exception in edit", MB_OK | MB_ICONERROR);
+                        ::MessageBoxA(NULL, e.what(), "FingerText2: exception in edit", MB_OK | MB_ICONERROR);
                     }
                     catch (...)
                     {
-                        ::MessageBoxA(NULL, "Unknown exception in editSnippet", "FingerText", MB_OK | MB_ICONERROR);
+                        ::MessageBoxA(NULL, "Unknown exception in editSnippet", "FingerText2", MB_OK | MB_ICONERROR);
                     }
                     return true;
                 }
