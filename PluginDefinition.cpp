@@ -4313,38 +4313,59 @@ void importSnippets(wchar_t* path)
                 //import snippet do not have the problem of " " in save snippet because of the space in  "!$[FingerTextData FingerTextData]@#"
                 ::SendScintilla(SCI_GOTOPOS, 0, 0);
 
+                ::OutputDebugStringA("[FingerText] importSnippets: before getLineChecked(tagText)\n");
                 getLineChecked(&tagText,1,TEXT("Error: Invalid TriggerText. The ftd file may be corrupted."));
+                ::OutputDebugStringA("[FingerText] importSnippets: after getLineChecked(tagText), tagText=");
+                ::OutputDebugStringA(tagText ? tagText : "(null)");
+                ::OutputDebugStringA("\n");
+
+                ::OutputDebugStringA("[FingerText] importSnippets: before getLineChecked(tagTypeText)\n");
                 getLineChecked(&tagTypeText,2,TEXT("Error: Invalid Scope. The ftd file may be corrupted."));
+                ::OutputDebugStringA("[FingerText] importSnippets: after getLineChecked(tagTypeText), tagTypeText=");
+                ::OutputDebugStringA(tagTypeText ? tagTypeText : "(null)");
+                ::OutputDebugStringA("\n");
                 
                 // Getting text after the 3rd line until the tag !$[FingerTextData FingerTextData]@#
                 ::SendScintilla(SCI_GOTOLINE,3,0);
                 snippetPosStart = ::SendScintilla(SCI_GETCURRENTPOS,0,0);
-                //int snippetPosEnd = ::SendMessage(curScintilla,SCI_GETLENGTH,0,0);
-            
+
+                ::OutputDebugStringA("[FingerText] importSnippets: before searchNext\n");
                 searchNext("!$[FingerTextData FingerTextData]@#");
                 snippetPosEnd = ::SendScintilla(SCI_GETCURRENTPOS,0,0);
-                
-                //::SendScintilla(SCI_SETSELECTION,snippetPosStart,snippetPosEnd);
-                //snippetText = new char[snippetPosEnd-snippetPosStart + 1];
-                //::SendScintilla(SCI_GETSELTEXT, 0, reinterpret_cast<LPARAM>(snippetText));
+                char posMsg[128];
+                ::wsprintfA(posMsg, "[FingerText] importSnippets: snippetPosStart=%d snippetPosEnd=%d\n", snippetPosStart, snippetPosEnd);
+                ::OutputDebugStringA(posMsg);
+
+                ::OutputDebugStringA("[FingerText] importSnippets: before sciGetText\n");
                 sciGetText(&snippetText,snippetPosStart,snippetPosEnd);
+                ::OutputDebugStringA("[FingerText] importSnippets: after sciGetText\n");
 
-
+                ::OutputDebugStringA("[FingerText] importSnippets: before REPLACESEL\n");
                 ::SendScintilla(SCI_SETSELECTION,0,snippetPosEnd+1); // This +1 corrupt the ! in !$[FingerTextData FingerTextData]@# so that the program know a snippet is finished importing
                 ::SendScintilla(SCI_REPLACESEL,0,(LPARAM)"");
+                ::OutputDebugStringA("[FingerText] importSnippets: after REPLACESEL\n");
 
                 sqlite3_stmt *stmt;
-                
+
                 notOverWrite = false;
-                
+
+                ::OutputDebugStringA("[FingerText] importSnippets: before sqlite3_prepare_v2 SELECT\n");
                 if (SQLITE_OK == sqlite3_prepare_v2(g_db, "SELECT snippet FROM snippets WHERE tagType LIKE ? AND tag LIKE ?", -1, &stmt, NULL))
                 {
+                    ::OutputDebugStringA("[FingerText] importSnippets: before sqlite3_bind_text/step\n");
                     sqlite3_bind_text(stmt, 1, tagTypeText, -1, SQLITE_STATIC);
                     sqlite3_bind_text(stmt, 2, tagText, -1, SQLITE_STATIC);
-                    if(SQLITE_ROW == sqlite3_step(stmt))
+                    int stepRc = sqlite3_step(stmt);
+                    char rcMsg[64];
+                    ::wsprintfA(rcMsg, "[FingerText] importSnippets: sqlite3_step rc=%d\n", stepRc);
+                    ::OutputDebugStringA(rcMsg);
+                    if(SQLITE_ROW == stepRc)
                     {
                         const char* extracted = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
                         if (extracted == NULL) extracted = "";
+                        ::OutputDebugStringA("[FingerText] importSnippets: existing extracted=");
+                        ::OutputDebugStringA(extracted);
+                        ::OutputDebugStringA("\n");
 
                         snippetTextOld = new char[strlen(extracted)+1];
                         strcpy(snippetTextOld, extracted);
