@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Win32
+            arch_label: 32bit
+            dll_path: "Unicode Release\\FingerText2.dll"
+          - platform: x64
+            arch_label: 64bit
+            dll_path: "x64\\Unicode Release\\FingerText2.dll"
+
+    steps:
+      - name: Checkout (raw git)
+        shell: pwsh
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch origin ${{ github.sha }}
+          git checkout ${{ github.sha }}
+
+      - name: Locate MSBuild via vswhere
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe" | Select-Object -First 1
+          if (-not $msbuild) { throw "MSBuild not found" }
+          Write-Host "Using MSBuild at: $msbuild"
+          Add-Content -Path $env:GITHUB_PATH -Value (Split-Path $msbuild)
+
+      - name: Build ${{ matrix.platform }} Release
+        shell: cmd
+        run: |
+          msbuild FingerText2.vcxproj ^
+            /m ^
+            /p:Configuration="Unicode Release" ^
+            /p:Platform="${{ matrix.platform }}" ^
+            /p:PlatformToolset=v143 ^
+            /p:WindowsTargetPlatformVersion=10.0 ^
+            /fileLogger ^
+            /fileLoggerParameters:LogFile=msbuild-${{ matrix.platform }}.log;Verbosity=normal
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: msbuild-log-${{ matrix.platform }}
+          path: msbuild-${{ matrix.platform }}.log
+          if-no-files-found: warn
+
+      - name: Package ZIP
+        shell: pwsh
+        run: |
+          $tag     = '${{ github.ref_name }}'
+          $version = $tag -replace '^v', ''
+          $arch    = '${{ matrix.arch_label }}'
+          $zipName = "FingerText2_${version}_${arch}.zip"
+          $dll     = '${{ matrix.dll_path }}'
+
+          # Verify the DLL was produced
+          if (-not (Test-Path $dll)) { throw "DLL not found at: $dll" }
+
+          # Create zip with DLL at root (no subdirectory)
+          Compress-Archive -Path $dll -DestinationPath $zipName -Force
+
+          # Verify round-trip: extracted entry should be FingerText2.dll at root
+          $tmp = New-Item -ItemType Directory -Path "verify_$arch" -Force
+          Expand-Archive -Path $zipName -DestinationPath $tmp.FullName -Force
+          if (-not (Test-Path (Join-Path $tmp.FullName "FingerText2.dll"))) {
+            throw "Round-trip verification failed: FingerText2.dll not at ZIP root"
+          }
+          Remove-Item $tmp.FullName -Recurse -Force
+
+          Write-Host "Packaged: $zipName"
+          echo "zip_name=$zipName" >> $env:GITHUB_OUTPUT
+        id: package
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zip-${{ matrix.arch_label }}
+          path: ${{ steps.package.outputs.zip_name }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: windows-latest
+
+    steps:
+      - name: Download 32bit ZIP
+        uses: actions/download-artifact@v4
+        with:
+          name: zip-32bit
+          path: release-assets
+
+      - name: Download 64bit ZIP
+        uses: actions/download-artifact@v4
+        with:
+          name: zip-64bit
+          path: release-assets
+
+      - name: Create draft GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag     = '${{ github.ref_name }}'
+          $version = $tag -replace '^v', ''
+          $isBeta  = $version -match '-beta$'
+
+          $files = Get-ChildItem release-assets -Filter "*.zip" | Select-Object -ExpandProperty FullName
+
+          $args = @(
+            'release', 'create', $tag,
+            '--repo', '${{ github.repository }}',
+            '--draft',
+            '--title', "FingerText2 $version",
+            '--notes', ''
+          )
+          if ($isBeta) { $args += '--prerelease' }
+          $args += $files
+
+          gh @args
+          Write-Host "Draft release created for $tag"
