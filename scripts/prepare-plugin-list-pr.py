@@ -193,8 +193,8 @@ def parse_args():
                    help=f"Owner of the nppPluginList fork (default: {DEFAULT_FORK_OWNER})")
     p.add_argument("--repo", default=DEFAULT_REPO,
                    help=f"Plugin repo slug owner/name (default: {DEFAULT_REPO})")
-    p.add_argument("--skip-validate", action="store_true",
-                   help="Skip running validator.py (use when entry already validated).")
+    p.add_argument("--validate", action="store_true",
+                   help="Run nppPluginList's validator.py against the inserted entry.")
     return p.parse_args()
 
 
@@ -279,8 +279,8 @@ def main():
     print("Inserting x64 entry...")
     insert_into_plugin_list(fork_dir / "src" / "pl.x64.json", entry64)
 
-    if args.skip_validate:
-        print("Skipping validator (--skip-validate).")
+    if not args.validate:
+        print("Skipping validator (use --validate to enable).")
     else:
         # Install validator dependencies. nppPluginList ships a requirements.txt;
         # if it doesn't, fall back to installing jsonschema directly.
