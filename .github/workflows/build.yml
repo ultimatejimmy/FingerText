@@ -18,8 +18,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Add MSBuild to PATH
-        uses: microsoft/setup-msbuild@v2
+      - name: Locate MSBuild via vswhere
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe" | Select-Object -First 1
+          if (-not $msbuild) { throw "MSBuild not found" }
+          Write-Host "Using MSBuild at: $msbuild"
+          Add-Content -Path $env:GITHUB_PATH -Value (Split-Path $msbuild)
 
       - name: Show available Windows SDKs
         shell: pwsh
