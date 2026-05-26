@@ -29,11 +29,11 @@
 
 //#define TESTING
 
-#define VERSION_TEXT "0.5.61"
-#define VERSION_NUM 0,5,61,0
-#define VERSION_LINEAR 561
+#define VERSION_TEXT "26.5.26-beta"
+#define VERSION_NUM 26,5,26,0
+#define VERSION_LINEAR 260526001
 #define VERSION_KEEP_CONFIG_START 549
-#define VERSION_STAGE "(Alpha)"
+#define VERSION_STAGE ""
 #ifdef TESTING
 #define VERSION_STAGE_ADD " Nightly"
 #else
