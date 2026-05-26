@@ -235,58 +235,25 @@ void PluginConfig::upgradeMessage()
 {
     if (newUpdate)
     {
-    //TODO: make better structure for welcometext. like one piece of string per version.
-    //TODO: dynamic upgrade message
-        char* welcomeText = new char[10000];
-        strcpy(welcomeText,"");
-
-    
-        strcat(welcomeText, "Thanks for Upgrading to ");
+        char* welcomeText = new char[2000];
+        strcpy(welcomeText, "Welcome to ");
         strcat(welcomeText, PLUGIN_NAME);
-        strcat(welcomeText, VERSION_TEXT);
         strcat(welcomeText, " ");
-        strcat(welcomeText, VERSION_STAGE);
-        strcat(welcomeText, VERSION_STAGE_ADD);
-        strcat(welcomeText, "\r\n\
-Please read this document if you are upgrading from previous versions.\r\n\r\n\
-Upgrading from 0.5.37 or above\r\n\
-Everything is compatible.\r\n\r\n\
-Upgrading from any version between 0.5.20 and 0.5.35\r\n\
-In version ");
         strcat(welcomeText, VERSION_TEXT);
-        strcat(welcomeText, " after you triggered a option hotspot, you can use right/down arrow to move to next option, left/up arrow to move to previous option. Hit tab confirm the choice.\r\n\r\n\
- Also the option hotspot is not delimited by |~| anymore, it's using is simplier |. So $[![(opt)ABC|DEF|GHI]!] will define an hotspot with 3 options.\r\n\
-Upgrading from any version between 0.5.0 and 0.5.18\r\n\
-All hotspots are now triggered from inside to outside, left to right. Therefore dynamic snippets that is created before 0.5.20 can behave differently in this version.\r\n\
-\r\n\
-Upgrading from 0.4.15 or 0.4.16\r\n\
-If you want to use your snippets after you upgrade to ");
-        strcat(welcomeText, VERSION_TEXT);
-        strcat(welcomeText, ", you can go to the config folder and move the FingerText2.db3 file to the config\\FingerText2 folder after update.\r\n\
-chain snippet is indicated by $[![(cha)]!] instead of $[![(chain)]!]\r\n\
-\r\n\
-Upgrading from 0.4.4 or 0.4.11\r\n\
-If you want to use your snippets after you upgrade to ");
-        strcat(welcomeText, VERSION_TEXT);
-        strcat(welcomeText, ", you can go to the config folder and move the FingerText2.db3 file to the config\\FingerText2 folder after update.\r\n\
-\r\n\
-Upgrading from 0.4.1\r\n\
-If you want to use your snippets after you upgrade to ");
-        strcat(welcomeText, VERSION_TEXT);
-        strcat(welcomeText, ", you can go to the %Notepad++ folder%\\plugins\\FingerText2 and get the old database file Snippets.db3. Rename it to FingerText2.db3 and move it to the config\\FingerText2 folder after update.\r\n\
-\r\n\
-Upgrading from 0.3.5 or below\r\n\
-FingerText2 uses a database system to store snippets. Snippets from very early versions are not compatible. Visit the wiki for more information.\r\n\
-");
-    
+        strcat(welcomeText, "\r\n\r\n\
+Quick start:\r\n\
+  - Open the snippet dock: Plugins > FingerText2 > Toggle On/Off SnippetDock\r\n\
+  - Type a trigger and press Tab to expand a snippet\r\n\
+  - Press Tab again to jump between hotspots\r\n\r\n\
+Full documentation, snippet syntax, and the hotspot reference:\r\n\
+  https://github.com/ultimatejimmy/FingerText2/wiki\r\n\r\n\
+Report issues or suggest features:\r\n\
+  https://github.com/ultimatejimmy/FingerText2/issues\r\n");
 
         ::SendMessage(nppData._nppHandle, NPPM_MENUCOMMAND, 0, IDM_FILE_NEW);
         ::SendMessage(getCurrentScintilla(), SCI_INSERTTEXT, 0, (LPARAM)welcomeText);
 
         delete [] welcomeText;
-
-    
-    
     }
 }
 
