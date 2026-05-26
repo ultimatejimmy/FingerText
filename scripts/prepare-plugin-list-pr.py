@@ -18,12 +18,23 @@ import hashlib
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
 import urllib.request
 from collections import OrderedDict
 from pathlib import Path
+
+
+def _rm_readonly(func, path, exc):
+    """rmtree error handler: clear the read-only bit and retry.
+
+    Git marks files inside .git/objects/ read-only, which Windows refuses to
+    delete without this dance.
+    """
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
 
 
 DEFAULT_FORK_OWNER = "ultimatejimmy"
@@ -201,7 +212,7 @@ def main():
     branch_name = f"add-fingertext2-{version}"
 
     if fork_dir.exists():
-        shutil.rmtree(fork_dir)
+        shutil.rmtree(fork_dir, onexc=_rm_readonly)
 
     print(f"Cloning fork {fork_repo}...")
     run(["git", "clone", f"https://github.com/{fork_repo}.git", str(fork_dir)])
