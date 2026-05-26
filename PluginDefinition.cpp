@@ -4214,19 +4214,27 @@ void importSnippets(wchar_t* path)
         
         if (withPath)
         {
-            file.open((LPCWSTR)path); 
+            file.open((LPCWSTR)path);
         } else
         {
-            file.open((LPCWSTR)fileName); 
+            file.open((LPCWSTR)fileName);
         }
-        
-
-        file.seekg(0, std::ios::end);
-        int fileLength = file.tellg();
-        file.seekg(0, std::ios::beg);
 
         if (file.is_open())
         {
+            file.seekg(0, std::ios::end);
+            std::streampos rawLength = file.tellg();
+            file.seekg(0, std::ios::beg);
+            if (rawLength < 0)
+            {
+                file.close();
+                showMessageBox(TEXT("Could not determine the size of the selected ftd file."));
+                pc.configInt[LIVE_HINT_UPDATE]++;
+                g_freezeDock = false;
+                return;
+            }
+            size_t fileLength = static_cast<size_t>(rawLength);
+
             char* fileText = new char[fileLength+1];
             ZeroMemory(fileText,fileLength);
 
@@ -4298,9 +4306,9 @@ void importSnippets(wchar_t* path)
                     if(SQLITE_ROW == sqlite3_step(stmt))
                     {
                         const char* extracted = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
-                        
+                        if (extracted == NULL) extracted = "";
+
                         snippetTextOld = new char[strlen(extracted)+1];
-                        ZeroMemory(snippetTextOld,sizeof(snippetTextOld));
                         strcpy(snippetTextOld, extracted);
                         //
                         //snippetTextOldCleaned = new char[strlen(snippetTextOld)];
