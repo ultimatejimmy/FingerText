@@ -232,15 +232,11 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
         // TODO: consider using SC_MOD_CHANGEANNOTATION to shutdown use of annotation in snippet editing mode
     }
     }
-    catch (const std::exception& e)
-    {
-        ::OutputDebugStringA("[FingerText] beNotified std::exception: ");
-        ::OutputDebugStringA(e.what());
-        ::OutputDebugStringA("\n");
-    }
     catch (...)
     {
-        ::OutputDebugStringA("[FingerText] beNotified unknown exception\n");
+        // Swallow any exception from a notification handler so it doesn't
+        // escape back into NPP's message dispatch and trigger
+        // STATUS_FATAL_USER_CALLBACK_EXCEPTION.
     }
 }
 
