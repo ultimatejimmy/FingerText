@@ -17,58 +17,60 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# ── Resolve repo root ─────────────────────────────────────────────────────────
+# Resolve repo root
 $repoRoot = Split-Path $PSScriptRoot -Parent
 Set-Location $repoRoot
 
-# ── Prompt if not supplied ────────────────────────────────────────────────────
+# Prompt if not supplied
 if (-not $Version) {
     $Version = Read-Host 'Enter version (e.g. 26.5.26 or 26.5.26-beta)'
 }
 $Version = $Version.Trim()
 
-# ── Validate version format ───────────────────────────────────────────────────
+# Validate version format
 if ($Version -notmatch '^\d+\.\d+\.\d+(\.\d+)?(-beta)?$') {
     Write-Error "Invalid version '$Version'. Expected YY.M.D, YY.M.D.N, YY.M.D-beta, or YY.M.D.N-beta."
     exit 1
 }
 
-# ── Parse components ──────────────────────────────────────────────────────────
-$isBeta     = $Version.EndsWith('-beta')
-$core       = $Version -replace '-beta$', ''
-$parts      = $core.Split('.')
-$year       = [int]$parts[0]
-$month      = [int]$parts[1]
-$day        = [int]$parts[2]
-$revision   = if ($parts.Count -ge 4) { [int]$parts[3] } else { 0 }
+# Parse components
+$isBeta   = $Version.EndsWith('-beta')
+$core     = $Version -replace '-beta$', ''
+$parts    = $core.Split('.')
+$year     = [int]$parts[0]
+$month    = [int]$parts[1]
+$day      = [int]$parts[2]
+$revision = if ($parts.Count -ge 4) { [int]$parts[3] } else { 0 }
 
 $versionNum    = "$year,$month,$day,$revision"
 $betaBit       = if ($isBeta) { 1 } else { 0 }
 $versionLinear = $year * 10000000 + $month * 100000 + $day * 1000 + $revision * 10 + $betaBit
 $tagName       = "v$Version"
 
-# ── Guard: dirty working tree ─────────────────────────────────────────────────
+# Guard: dirty working tree (ignore untracked files)
 $dirty = git status --porcelain | Where-Object { $_ -notmatch '^\?\?' }
 if ($dirty) {
     Write-Error "Working tree is dirty. Commit or stash all changes before releasing.`n$dirty"
     exit 1
 }
 
-# ── Guard: tag must not already exist ────────────────────────────────────────
+# Guard: tag must not already exist locally
 $existingTag = git tag --list $tagName
 if ($existingTag) {
     Write-Error "Tag $tagName already exists locally. Use a different version."
     exit 1
 }
+
+# Check remote tag (non-fatal if unreachable)
 $remoteTag = git ls-remote --tags origin $tagName 2>$null
 if ($LASTEXITCODE -eq 0 -and $remoteTag) {
     Write-Error "Tag $tagName already exists on remote. Use a different version."
     exit 1
 } elseif ($LASTEXITCODE -ne 0) {
-    Write-Host "  (Could not reach remote to check for duplicate tag — will let git push catch it.)" -ForegroundColor DarkYellow
+    Write-Host "  (Could not reach remote to check for duplicate tag - will let git push catch it.)" -ForegroundColor DarkYellow
 }
 
-# ── Print plan ────────────────────────────────────────────────────────────────
+# Print plan
 Write-Host ""
 Write-Host "Release plan for $Version" -ForegroundColor Cyan
 Write-Host "  VERSION_TEXT    = `"$Version`""
@@ -84,36 +86,33 @@ if ($DryRun) {
     exit 0
 }
 
-# ── Rewrite Config/Version.h ──────────────────────────────────────────────────
+# Rewrite Config/Version.h
 $vhPath = Join-Path $repoRoot 'Config\Version.h'
 $vh = Get-Content $vhPath -Raw
 
-$vh = $vh -replace '#define VERSION_TEXT\s+"[^"]*"',   "#define VERSION_TEXT `"$Version`""
-$vh = $vh -replace '#define VERSION_NUM\s+[\d,]+',      "#define VERSION_NUM $versionNum"
-$vh = $vh -replace '#define VERSION_LINEAR\s+\d+',      "#define VERSION_LINEAR $versionLinear"
-$vh = $vh -replace '#define VERSION_STAGE\s+"[^"]*"',   '#define VERSION_STAGE ""'
+$vh = $vh -replace '#define VERSION_TEXT\s+"[^"]*"',  "#define VERSION_TEXT `"$Version`""
+$vh = $vh -replace '#define VERSION_NUM\s+[\d,]+',     "#define VERSION_NUM $versionNum"
+$vh = $vh -replace '#define VERSION_LINEAR\s+\d+',     "#define VERSION_LINEAR $versionLinear"
+$vh = $vh -replace '#define VERSION_STAGE\s+"[^"]*"',  '#define VERSION_STAGE ""'
 
-# Refresh DATE_TEXT with current month/year
 $monthNames = @('','January','February','March','April','May','June',
                 'July','August','September','October','November','December')
 $dateText = "$($monthNames[$month]) 20$year"
-$vh = $vh -replace '#define DATE_TEXT\s+"[^"]*"', "#define DATE_TEXT `"$dateText`""
-
-# Refresh COPYRIGHT_TEXT year
+$vh = $vh -replace '#define DATE_TEXT\s+"[^"]*"',      "#define DATE_TEXT `"$dateText`""
 $vh = $vh -replace '#define COPYRIGHT_TEXT\s+"[^"]*"', "#define COPYRIGHT_TEXT `"Copyright (C) 20$year`""
 
 Set-Content $vhPath $vh -NoNewline
 
 Write-Host "Updated Config/Version.h" -ForegroundColor Green
 
-# ── Commit and tag ────────────────────────────────────────────────────────────
+# Commit and tag
 git add "Config/Version.h"
 git commit -m "Release $tagName"
 git tag -a $tagName -m "$tagName"
 
 Write-Host "Created commit and tag $tagName" -ForegroundColor Green
 
-# ── Push ─────────────────────────────────────────────────────────────────────
+# Push
 git push origin master
 git push origin $tagName
 
